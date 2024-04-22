@@ -1,5 +1,5 @@
 
-# MAVLink 2
+# MAVLink 2 Saleae Logic 2 Extension
   
 ## Getting started
 
