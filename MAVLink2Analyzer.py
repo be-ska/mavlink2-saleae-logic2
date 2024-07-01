@@ -12,7 +12,9 @@ class MAVLink2(HighLevelAnalyzer):
     message = None
     error = None
     start_frame = None
-    header = b'\xfd'
+    header_v1 = b'\xfe'
+    header_v2 = b'\xfd'
+    header_length = 0
 
     # An optional list of types this analyzer produces, providing a way to customize the way frames are displayed in Logic 2.
     result_types = {
@@ -28,10 +30,17 @@ class MAVLink2(HighLevelAnalyzer):
     def parse_mavlink(self, byte):
         if self.parse_state == 0:
             # wait header
-            if byte == self.header:
+            if byte == self.header_v1:
                 self.buff.clear()
                 self.buff += byte
                 self.parse_state = 1
+                self.header_length = 7
+                return 1
+            elif byte == self.header_v2:
+                self.buff.clear()
+                self.buff += byte
+                self.parse_state = 1
+                self.header_length = 11
                 return 1
         elif self.parse_state == 1:
             # check packet length
@@ -40,7 +49,7 @@ class MAVLink2(HighLevelAnalyzer):
             self.parse_state = 2
         elif self.parse_state == 2:
             self.buff += byte
-            if len(self.buff) > self.packet_length+11:
+            if len(self.buff) > self.packet_length+self.header_length:
                 self.parse_state = 0
                 msg = None
                 try:
